@@ -5,6 +5,7 @@ import br.com.rogeriosouza.productsservice.core.data.ProductRepository;
 import br.com.rogeriosouza.productsservice.core.events.ProductCreatedEvent;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
+import org.axonframework.messaging.interceptors.ExceptionHandler;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
@@ -18,13 +19,29 @@ public class ProductsEventsHandler {
         this.productRepository = productRepository;
     }
 
+    @ExceptionHandler(resultType = IllegalArgumentException.class)
+    public void handler(IllegalArgumentException exception) {
+
+    }
+
+    @ExceptionHandler(resultType = Exception.class)
+    public void handler(Exception exception) throws Exception {
+        throw exception;
+    }
+
     @EventHandler
-    public void on(ProductCreatedEvent productCreatedEvent) {
+    public void on(ProductCreatedEvent productCreatedEvent) throws Exception {
 
         ProductEntity productEntity = new ProductEntity();
         BeanUtils.copyProperties(productCreatedEvent, productEntity);
 
-        productRepository.save(productEntity);
+        try {
+            productRepository.save(productEntity);
+        } catch (IllegalArgumentException exception) {
+            exception.printStackTrace();
+        }
+
+        if (true) throw new Exception("An error took place in the CreaterProductCommand @CommandHandler");
 
     }
 
